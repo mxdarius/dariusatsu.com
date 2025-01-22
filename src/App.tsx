@@ -13,16 +13,17 @@ function App() {
   }, []);
 
   const links = [
-    { href: 'https://linkedin.com', label: 'LINKEDIN' },
-    { href: 'https://x.com', label: 'X' },
-    { href: 'mailto:contact@example.com', label: 'EMAIL' },
+    { href: 'https://www.linkedin.com/in/dariusatsu/', label: 'LINKEDIN' },
+    { href: 'https://github.com/mxdarius', label: 'GITHUB' },
+    { href: 'https://x.com/dariusatsu', label: 'X' },
+    { href: 'mailto:webenquiry@dariusatsu.com', label: 'EMAIL' },
   ];
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
-      <div className="flex flex-col w-[80vw]">
+    <div className="min-h-screen bg-black flex items-center justify-center px-3">
+      <div className="flex flex-col w-full max-w-[90vw] md:w-[80vw]">
         <h1 
-          className={`text-white font-extrabold text-[min(20vw,180px)] leading-none tracking-tight transition-all duration-1000 ${
+          className={`text-white font-extrabold text-[12vw] md:text-[min(20vw,180px)] leading-none tracking-tight transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
           }`}
           style={{ fontFamily: "'Druk Wide Bold', system-ui, sans-serif" }}
@@ -30,8 +31,8 @@ function App() {
           DARIUS ATSU
         </h1>
         
-        <div className="relative h-[2px] mt-16">
-          <div className="flex gap-8 absolute -top-8">
+        <div className="relative h-[2px] mt-8 md:mt-16">
+          <div className="flex flex-wrap gap-4 md:gap-8 absolute -top-8">
             {links.map((link, index) => (
               <a
                 key={link.label}
@@ -43,7 +44,7 @@ function App() {
                 }`}
                 style={{ 
                   fontFamily: "'Druk Wide Bold', system-ui, sans-serif",
-                  fontSize: '0.875rem',
+                  fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
                   transitionDelay: `${index * 150 + 200}ms`,
                   transitionTimingFunction: 'cubic-bezier(0.33, 1, 0.68, 1)'
                 }}

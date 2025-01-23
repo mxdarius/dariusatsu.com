@@ -24,7 +24,7 @@ function App() {
     <div className="min-h-screen bg-black flex items-center justify-center px-3">
       <div className="flex flex-col w-full max-w-[90vw] md:w-[80vw]">
         <h1 
-          className={`text-white font-extrabold text-[12vw] md:text-[min(20vw,180px)] leading-none tracking-tight transition-all duration-1000 ${
+          className={`text-white font-extrabold text-[12vw] md:text-[min(20vw,180px)] leading-none tracking-tight transition-all duration-1000 pb-6 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
           }`}
           style={{ fontFamily: "'Druk Wide Bold', system-ui, sans-serif" }}

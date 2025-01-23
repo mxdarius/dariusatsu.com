@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import AddToHomeScreen from './AddToHomescreen';  // Updated path
 
 function App() {
   const [isVisible, setIsVisible] = useState(false);
@@ -67,6 +68,7 @@ function App() {
           />
         </div>
       </div>
+      <AddToHomeScreen />
     </div>
   );
 }

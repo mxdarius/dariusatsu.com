@@ -21,7 +21,7 @@ function App() {
   ];
 
   return (
-    <div className="h-screen bg-black flex items-center justify-center px-3 overflow-hidden">
+    <div className="fixed inset-0 bg-black flex items-center justify-center px-3 overflow-hidden">
       <div className="flex flex-col w-full max-w-[90vw] md:w-[80vw]">
         <h1 
           className={`text-white font-extrabold text-[12vw] md:text-[min(20vw,180px)] leading-none tracking-tight transition-all duration-1000 pb-6 ${

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
-const AddToHomeScreen = () => {
+export const AddToHomeScreen: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
 
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const isIOS = /iPad|iPhone|iPod/.test(window.navigator.userAgent) && !(window as any).MSStream;
+  const isStandalone = ('matchMedia' in window) && window.matchMedia('(display-mode: standalone)').matches;
 
   if (!isIOS || isStandalone || !isVisible) return null;
 
@@ -26,5 +26,3 @@ const AddToHomeScreen = () => {
     </div>
   );
 };
-
-export default AddToHomeScreen;

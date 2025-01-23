@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import AddToHomeScreen from './AddToHomescreen';  // Updated path
+import { useEffect, useState } from 'react';
+import { AddToHomeScreen } from './AddToHomeScreen';
 
-function App() {
+function App(): JSX.Element {
   const [isVisible, setIsVisible] = useState(false);
   const [showLinks, setShowLinks] = useState(false);
 

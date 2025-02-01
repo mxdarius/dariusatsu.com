@@ -40,10 +40,10 @@ function App(): JSX.Element {
           },
           particles: {
             number: {
-              value: 109,
+              value: 60,
               density: {
-                enable: false,
-                area: 6786.77
+                enable: true,
+                area: 1500
               }
             },
             color: {
@@ -53,50 +53,36 @@ function App(): JSX.Element {
               type: "circle",
             },
             opacity: {
-              value: 0.5,
-              random: false,
-              animation: {
-                enable: false,
-                speed: 1,
-                minimumValue: 0.1,
-                sync: false
-              }
+              value: 0.4,
+              random: false
             },
             size: {
-              value: 0.1,
-              random: true,
-              animation: {
-                enable: false,
-                speed: 40,
-                minimumValue: 0.1,
-                sync: false
-              }
+              value: 1,
+              random: true
             },
             links: {
               enable: true,
-              distance: 157.83,
+              distance: 150,
               color: "#ffffff",
-              opacity: 0.4,
-              width: 1
+              opacity: 0.3,
+              width: 0.8
             },
             move: {
               enable: true,
-              speed: 6,
+              speed: 2,
               direction: "none",
               random: false,
               straight: false,
               outModes: {
-                default: "out"
+                default: "bounce"
               },
               attract: {
-                enable: true,
-                rotateX: 600,
-                rotateY: 1200
+                enable: false
               }
             }
           },
           interactivity: {
-            detectsOn: "canvas",
+            detectsOn: "window",
             events: {
               onHover: {
                 enable: true,
@@ -104,20 +90,19 @@ function App(): JSX.Element {
               },
               onClick: {
                 enable: true,
-                mode: "repulse"
+                mode: "push"
               },
               resize: true
             },
             modes: {
               grab: {
-                distance: 400,
+                distance: 200,
                 links: {
-                  opacity: 1
+                  opacity: 0.5
                 }
               },
-              repulse: {
-                distance: 200,
-                duration: 0.4
+              push: {
+                quantity: 3
               }
             }
           },

@@ -3,6 +3,3 @@ compatibility_date = "2024-08-06"
 
 # Tell Wrangler which directory to deploy when using `wrangler pages deploy`.
 pages_build_output_dir = "./dist"
-
-[build]
-command = "npm run build"

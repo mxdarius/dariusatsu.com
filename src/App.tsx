@@ -20,10 +20,7 @@ function App(): JSX.Element {
   }, []);
 
   const links = [
-    { href: 'https://www.linkedin.com/in/dariusatsu/', label: 'LINKEDIN' },
     { href: 'https://github.com/mxdarius', label: 'GITHUB' },
-    { href: 'https://bsky.app/profile/dariusatsu.com', label: 'B.SKY' },
-    { href: 'https://x.com/dariusatsu', label: 'X' },
     { href: 'mailto:webenquiry@dariusatsu.com', label: 'EMAIL' },
   ];
 

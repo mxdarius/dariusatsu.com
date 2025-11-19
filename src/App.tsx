@@ -7,8 +7,13 @@ const LINE1_ORIGINAL = "DARIUS";
 const LINE2_ORIGINAL = "ATSU";
 const LINE1_TARGET = "GXMBY";
 const LINE2_TARGET = "////";
-const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ/"; // Added / for the target characters
-const ANIMATION_COOLDOWN = 7000; // 7 seconds cooldown between animations
+const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ/";
+const ANIMATION_COOLDOWN = 7000;
+
+interface CharPressure {
+  scale: number;
+  blur: number;
+}
 
 function App(): JSX.Element {
   const [isVisible, setIsVisible] = useState(false);
@@ -20,49 +25,134 @@ function App(): JSX.Element {
   const [isAnimating, setIsAnimating] = useState(false);
   const [flickerChars, setFlickerChars] = useState<{line: number, index: number}[]>([]);
   const [lastAnimationTime, setLastAnimationTime] = useState(0);
+  const [charPressures, setCharPressures] = useState<Map<string, CharPressure>>(new Map());
   
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimeoutRef = useRef<number | null>(null);
+  const textContainerRef = useRef<HTMLElement | null>(null);
 
   const particlesInit = useCallback(async (engine: Engine) => {
     await loadSlim(engine);
   }, []);
 
-  // Time-aware theme detection (inverted: dark during day, light during night)
+  // Time-aware theme detection (INVERTED: night = white bg, day = black bg)
   useEffect(() => {
     const updateTheme = () => {
       const hour = new Date().getHours();
-      // Day hours: 6am-6pm = dark theme, Night hours: 6pm-6am = light theme (inverted)
-      const isDayTime = hour >= 6 && hour < 18;
-      setTheme(isDayTime ? 'dark' : 'light');
-      document.documentElement.setAttribute('data-theme', isDayTime ? 'dark' : 'light');
+      // Night hours: 6pm-6am = light theme, Day hours: 6am-6pm = dark theme
+      const isNightTime = hour < 6 || hour >= 18;
+      setTheme(isNightTime ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', isNightTime ? 'light' : 'dark');
     };
 
     updateTheme();
-    // Check every minute for theme updates
     const interval = setInterval(updateTheme, 60000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    // Start name animation immediately after mount
     requestAnimationFrame(() => setIsVisible(true));
-    // Start links animation after name animation
     const timer = setTimeout(() => setShowLinks(true), 1200);
     return () => clearTimeout(timer);
   }, []);
 
-  // Split-flap animation logic
+  // Safety: Ensure "DARIUS ATSU" is always the natural default
+  useEffect(() => {
+    // On mount, guarantee the text is set to original
+    if (line1Text !== LINE1_ORIGINAL || line2Text !== LINE2_ORIGINAL) {
+      if (!isAnimating) {
+        console.log('⚠️ Restoring to default: DARIUS ATSU');
+        setLine1Text(LINE1_ORIGINAL);
+        setLine2Text(LINE2_ORIGINAL);
+      }
+    }
+  }, []); // Only run once on mount
+
+  // Cursor tracking for pressure effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      
+      if (!textContainerRef.current) return;
+      
+      const container = textContainerRef.current;
+      const chars = container.querySelectorAll('.pressure-char');
+      const newPressures = new Map<string, CharPressure>();
+      
+      chars.forEach((char, index) => {
+        const rect = char.getBoundingClientRect();
+        const charCenterX = rect.left + rect.width / 2;
+        const charCenterY = rect.top + rect.height / 2;
+        
+        const distance = Math.sqrt(
+          Math.pow(e.clientX - charCenterX, 2) + 
+          Math.pow(e.clientY - charCenterY, 2)
+        );
+        
+        // Calculate pressure based on distance (closer = more pressure)
+        const maxDistance = 300;
+        const normalizedDistance = Math.min(distance / maxDistance, 1);
+        
+        // Scale: 1.0 to 1.3 based on proximity
+        const scale = 1 + (1 - normalizedDistance) * 0.3;
+        
+        // Blur: 0 to 8px based on proximity (edges blur more)
+        const blur = (1 - normalizedDistance) * 8;
+        
+        newPressures.set(`char-${index}`, { scale, blur });
+      });
+      
+      setCharPressures(newPressures);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [line1Text, line2Text]);
+
+  // Pointer Events API for pressure (if supported)
+  useEffect(() => {
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!textContainerRef.current || e.pressure === 0.5) return; // 0.5 is default mouse pressure
+      
+      const container = textContainerRef.current;
+      const chars = container.querySelectorAll('.pressure-char');
+      const newPressures = new Map<string, CharPressure>();
+      
+      chars.forEach((char, index) => {
+        const rect = char.getBoundingClientRect();
+        const charCenterX = rect.left + rect.width / 2;
+        const charCenterY = rect.top + rect.height / 2;
+        
+        const distance = Math.sqrt(
+          Math.pow(e.clientX - charCenterX, 2) + 
+          Math.pow(e.clientY - charCenterY, 2)
+        );
+        
+        const maxDistance = 300;
+        const normalizedDistance = Math.min(distance / maxDistance, 1);
+        
+        // Combine distance and actual pressure
+        const pressureFactor = e.pressure;
+        const scale = 1 + (1 - normalizedDistance) * pressureFactor * 0.5;
+        const blur = (1 - normalizedDistance) * pressureFactor * 12;
+        
+        newPressures.set(`char-${index}`, { scale, blur });
+      });
+      
+      setCharPressures(newPressures);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    return () => window.removeEventListener('pointermove', handlePointerMove);
+  }, [line1Text, line2Text]);
+
   const animateSplitFlap = useCallback((toTarget: boolean) => {
     setIsAnimating(true);
-    setFlickerChars([]); // Clear any existing flickers
+    setFlickerChars([]);
 
-    // Flicker effect before transformation - flicker each character individually
     const flickerCount = 6;
     let currentFlicker = 0;
     
     const flickerInterval = setInterval(() => {
       if (currentFlicker < flickerCount) {
-        // Randomly select characters to flicker
         const chars: {line: number, index: number}[] = [];
         for (let i = 0; i < LINE1_ORIGINAL.length; i++) {
           if (Math.random() > 0.5) chars.push({line: 1, index: i});
@@ -73,25 +163,21 @@ function App(): JSX.Element {
         setFlickerChars(chars);
         currentFlicker++;
       } else {
-        // Clear interval and flicker state
         clearInterval(flickerInterval);
         setFlickerChars([]);
         
-        // Start the actual transformation
         if (toTarget) {
-          // Transform to GXMBY on line 1 and // on line 2
+          // Transform to GXMBY ////
           let currentLine1 = LINE1_ORIGINAL;
           let currentLine2 = LINE2_ORIGINAL;
 
-          // Animate line 1 (DARIUS -> GXMBY)
           for (let i = 0; i < Math.max(LINE1_ORIGINAL.length, LINE1_TARGET.length); i++) {
             setTimeout(() => {
               if (i < LINE1_TARGET.length && i < LINE1_ORIGINAL.length) {
-                // Transform existing character
                 let cycles = 0;
                 const cycleInterval = setInterval(() => {
                   if (cycles < 2) {
-                    const randomChar = CHARS[Math.floor(Math.random() * (CHARS.length - 1))]; // Exclude / for random
+                    const randomChar = CHARS[Math.floor(Math.random() * (CHARS.length - 1))];
                     const chars = currentLine1.split('');
                     chars[i] = randomChar;
                     currentLine1 = chars.join('');
@@ -106,18 +192,15 @@ function App(): JSX.Element {
                   }
                 }, 60);
               } else if (i >= LINE1_TARGET.length) {
-                // Remove extra characters
                 currentLine1 = currentLine1.slice(0, -1);
                 setLine1Text(currentLine1);
               }
             }, i * 80);
           }
 
-          // Animate line 2 (ATSU -> //)
           for (let i = 0; i < Math.max(LINE2_ORIGINAL.length, LINE2_TARGET.length); i++) {
             setTimeout(() => {
               if (i < LINE2_TARGET.length && i < LINE2_ORIGINAL.length) {
-                // Transform existing character
                 let cycles = 0;
                 const cycleInterval = setInterval(() => {
                   if (cycles < 2) {
@@ -140,7 +223,6 @@ function App(): JSX.Element {
                   }
                 }, 60);
               } else if (i >= LINE2_TARGET.length) {
-                // Remove extra characters
                 currentLine2 = currentLine2.slice(0, -1);
                 setLine2Text(currentLine2);
                 if (i === LINE2_ORIGINAL.length - 1) {
@@ -150,73 +232,77 @@ function App(): JSX.Element {
             }, (LINE1_ORIGINAL.length + i) * 80);
           }
         } else {
-          // Transform back to DARIUS ATSU
-          const targetLine1 = LINE1_ORIGINAL;
-          const targetLine2 = LINE2_ORIGINAL;
-          let currentLine1 = line1Text;
+          // RESTORE TO "DARIUS ATSU" - Guaranteed restoration
+          const targetLine1 = LINE1_ORIGINAL; // "DARIUS"
+          const targetLine2 = LINE2_ORIGINAL; // "ATSU"
+
+          // Build strings character by character to ensure proper restoration
+          const line1Chars: string[] = [];
+          const line2Chars: string[] = [];
 
           // Animate line 1 back to DARIUS
           for (let i = 0; i < targetLine1.length; i++) {
             setTimeout(() => {
               const targetChar = targetLine1[i];
               let cycles = 0;
+              
               const cycleInterval = setInterval(() => {
                 if (cycles < 2) {
-                  const randomChar = CHARS[Math.floor(Math.random() * (CHARS.length - 1))]; // Exclude /
-                  const chars = currentLine1.split('');
-                  if (chars.length <= i) {
-                    chars.push(randomChar);
-                  } else {
-                    chars[i] = randomChar;
+                  // Flicker with random character
+                  const randomChar = CHARS[Math.floor(Math.random() * (CHARS.length - 1))];
+                  line1Chars[i] = randomChar;
+                  
+                  // Pad with existing chars or spaces
+                  const displayChars = [...line1Chars];
+                  while (displayChars.length < targetLine1.length) {
+                    displayChars.push('');
                   }
-                  currentLine1 = chars.join('');
-                  setLine1Text(currentLine1);
+                  setLine1Text(displayChars.join('').substring(0, i + 1).padEnd(i + 1, ' '));
                   cycles++;
                 } else {
+                  // Set final character
                   clearInterval(cycleInterval);
-                  const chars = currentLine1.split('');
-                  if (chars.length <= i) {
-                    chars.push(targetChar);
-                  } else {
-                    chars[i] = targetChar;
-                  }
-                  currentLine1 = chars.join('');
-                  setLine1Text(currentLine1);
+                  line1Chars[i] = targetChar;
+                  setLine1Text(line1Chars.join(''));
                 }
               }, 60);
             }, i * 80);
           }
 
-          // Animate line 2 back to ATSU
+          // Animate line 2 back to ATSU  
           for (let i = 0; i < targetLine2.length; i++) {
             setTimeout(() => {
               const targetChar = targetLine2[i];
               let cycles = 0;
-              let currentLine2Local = line2Text;
+              
               const cycleInterval = setInterval(() => {
                 if (cycles < 2) {
-                  const randomChar = CHARS[Math.floor(Math.random() * (CHARS.length - 1))]; // Exclude /
-                  const chars = currentLine2Local.split('');
-                  if (chars.length <= i) {
-                    chars.push(randomChar);
-                  } else {
-                    chars[i] = randomChar;
+                  // Flicker with random character
+                  const randomChar = CHARS[Math.floor(Math.random() * (CHARS.length - 1))];
+                  line2Chars[i] = randomChar;
+                  
+                  // Pad with existing chars or spaces
+                  const displayChars = [...line2Chars];
+                  while (displayChars.length < targetLine2.length) {
+                    displayChars.push('');
                   }
-                  currentLine2Local = chars.join('');
-                  setLine2Text(currentLine2Local);
+                  setLine2Text(displayChars.join('').substring(0, i + 1).padEnd(i + 1, ' '));
                   cycles++;
                 } else {
+                  // Set final character
                   clearInterval(cycleInterval);
-                  const chars = currentLine2Local.split('');
-                  if (chars.length <= i) {
-                    chars.push(targetChar);
-                  } else {
-                    chars[i] = targetChar;
-                  }
-                  currentLine2Local = chars.join('');
-                  setLine2Text(currentLine2Local);
+                  line2Chars[i] = targetChar;
+                  setLine2Text(line2Chars.join(''));
+                  
+                  // Complete animation when last character is restored
                   if (i === targetLine2.length - 1) {
-                    setIsAnimating(false);
+                    setTimeout(() => {
+                      // Final guarantee: force set to exact original values
+                      setLine1Text(LINE1_ORIGINAL);
+                      setLine2Text(LINE2_ORIGINAL);
+                      setIsAnimating(false);
+                      console.log('✓ Restoration complete: DARIUS ATSU');
+                    }, 200);
                   }
                 }
               }, 60);
@@ -226,20 +312,17 @@ function App(): JSX.Element {
       }
     }, 50);
 
-    // Return cleanup function
     return () => {
       clearInterval(flickerInterval);
       setFlickerChars([]);
     };
   }, [line1Text, line2Text]);
 
-  // Handle hover with delay
   useEffect(() => {
     if (isHovering && !isAnimating) {
       const now = Date.now();
       const timeSinceLastAnimation = now - lastAnimationTime;
       
-      // Check if enough time has passed since last animation
       if (timeSinceLastAnimation >= ANIMATION_COOLDOWN) {
         hoverTimeoutRef.current = setTimeout(() => {
           setLastAnimationTime(Date.now());
@@ -254,7 +337,6 @@ function App(): JSX.Element {
         const now = Date.now();
         const timeSinceLastAnimation = now - lastAnimationTime;
         
-        // Also check cooldown for reverse animation
         if (timeSinceLastAnimation >= ANIMATION_COOLDOWN) {
           setLastAnimationTime(Date.now());
           animateSplitFlap(false);
@@ -275,6 +357,31 @@ function App(): JSX.Element {
   ];
 
   const isDark = theme === 'dark';
+
+  const renderPressureText = (text: string, lineNumber: number) => {
+    return text.split('').map((char, index) => {
+      const globalIndex = lineNumber === 1 ? index : LINE1_ORIGINAL.length + index;
+      const pressure = charPressures.get(`char-${globalIndex}`) || { scale: 1, blur: 0 };
+      const isFlickering = flickerChars.some(f => f.line === lineNumber && f.index === index);
+      
+      return (
+        <span
+          key={`line${lineNumber}-${index}`}
+          className="pressure-char split-flap-char inline-block"
+          style={{
+            opacity: isFlickering ? 0.3 : 1,
+            transform: `scale(${pressure.scale})`,
+            filter: `blur(${pressure.blur}px)`,
+            transition: 'opacity 0.05s ease-in-out, transform 0.1s ease-out, filter 0.1s ease-out',
+            display: 'inline-block',
+            transformOrigin: 'center'
+          }}
+        >
+          {char}
+        </span>
+      );
+    });
+  };
 
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ backgroundColor: 'var(--bg-color)' }}>
@@ -366,11 +473,12 @@ function App(): JSX.Element {
               href="https://instagram.com/gxmby"
               target="_blank"
               rel="noopener noreferrer"
+              ref={textContainerRef as any}
               className={`font-extrabold leading-[0.85] tracking-tight transition-all duration-1000 pb-6 ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
               }`}
               style={{ 
-                fontFamily: "'Druk Wide Bold', system-ui, sans-serif",
+                fontFamily: "'Cocogoose Pro', system-ui, sans-serif",
                 color: 'var(--text-color)',
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -381,47 +489,20 @@ function App(): JSX.Element {
               onMouseLeave={() => setIsHovering(false)}
             >
               <div className="block">
-                {line1Text.split('').map((char, index) => {
-                  const isFlickering = flickerChars.some(f => f.line === 1 && f.index === index);
-                  return (
-                    <span
-                      key={`line1-${index}`}
-                      className="split-flap-char inline-block"
-                      style={{
-                        opacity: isFlickering ? 0.3 : 1,
-                        transition: 'opacity 0.05s ease-in-out'
-                      }}
-                    >
-                      {char}
-                    </span>
-                  );
-                })}
+                {renderPressureText(line1Text, 1)}
               </div>
               <div className="block">
-                {line2Text.split('').map((char, index) => {
-                  const isFlickering = flickerChars.some(f => f.line === 2 && f.index === index);
-                  return (
-                    <span
-                      key={`line2-${index}`}
-                      className="split-flap-char inline-block"
-                      style={{
-                        opacity: isFlickering ? 0.3 : 1,
-                        transition: 'opacity 0.05s ease-in-out'
-                      }}
-                    >
-                      {char}
-                    </span>
-                  );
-                })}
+                {renderPressureText(line2Text, 2)}
               </div>
             </a>
           ) : (
             <div 
+              ref={textContainerRef as any}
               className={`font-extrabold leading-[0.85] tracking-tight transition-all duration-1000 pb-6 ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
               }`}
               style={{ 
-                fontFamily: "'Druk Wide Bold', system-ui, sans-serif",
+                fontFamily: "'Cocogoose Pro', system-ui, sans-serif",
                 color: 'var(--text-color)',
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -431,38 +512,10 @@ function App(): JSX.Element {
               onMouseLeave={() => setIsHovering(false)}
             >
               <div className="block">
-                {line1Text.split('').map((char, index) => {
-                  const isFlickering = flickerChars.some(f => f.line === 1 && f.index === index);
-                  return (
-                    <span
-                      key={`line1-${index}`}
-                      className="split-flap-char inline-block"
-                      style={{
-                        opacity: isFlickering ? 0.3 : 1,
-                        transition: 'opacity 0.05s ease-in-out'
-                      }}
-                    >
-                      {char}
-                    </span>
-                  );
-                })}
+                {renderPressureText(line1Text, 1)}
               </div>
               <div className="block">
-                {line2Text.split('').map((char, index) => {
-                  const isFlickering = flickerChars.some(f => f.line === 2 && f.index === index);
-                  return (
-                    <span
-                      key={`line2-${index}`}
-                      className="split-flap-char inline-block"
-                      style={{
-                        opacity: isFlickering ? 0.3 : 1,
-                        transition: 'opacity 0.05s ease-in-out'
-                      }}
-                    >
-                      {char}
-                    </span>
-                  );
-                })}
+                {renderPressureText(line2Text, 2)}
               </div>
             </div>
           )}
@@ -479,7 +532,7 @@ function App(): JSX.Element {
                       : 'opacity-0 -translate-y-[200px]'
                   }`}
                   style={{ 
-                    fontFamily: "'Druk Wide Bold', system-ui, sans-serif",
+                    fontFamily: "'Cocogoose Pro', system-ui, sans-serif",
                     fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
                     transitionDelay: `${index * 150 + 200}ms`,
                     transitionTimingFunction: 'cubic-bezier(0.33, 1, 0.68, 1)',

@@ -29,7 +29,16 @@
 }
 
 @font-face {
-  font-family: "Druk Wide Bold";
+  font-family: "Cocogoose Pro";
+  src: url("/fonts/Cocogoose-Pro-Bold-Italic-trial.ttf") format("truetype");
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Fallback for font loading */
+@font-face {
+  font-family: "Cocogoose Pro";
   src: url("https://db.onlinewebfonts.com/t/2206d6cc490084998d531e8c1b2cbb4a.woff2")
     format("woff2");
   font-weight: bold;

@@ -1,0 +1,24 @@
+---
+const skills = [
+  "TECHNICAL SUPPORT",
+  "DEVELOPMENT", 
+  "SYSTEMS OPTIMISATION",
+  "DATA ANALYSIS",
+  "OPERATIONAL LEADERSHIP",
+  "CUSTOMER SERVICE"
+];
+---
+
+<section class="py-16 border-y border-gray-200 dark:border-gray-800 opacity-0 animate-[fade-in_0.8s_ease-out_1.4s_forwards] motion-reduce:animate-none motion-reduce:opacity-100">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="flex flex-wrap justify-center gap-x-8 gap-y-3">
+      {skills.map((skill, index) => (
+        <span class="text-xs sm:text-sm font-semibold tracking-[0.2em] text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors duration-200">
+          {skill}
+        </span>
+      ))}
+    </div>
+  </div>
+</section>
+
+

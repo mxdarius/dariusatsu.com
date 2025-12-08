@@ -1,0 +1,51 @@
+---
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/inter/800.css';
+import '@fontsource/inter/900.css';
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-GB">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Darius Atsu - Creative Technologist & Developer" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body class="bg-white dark:bg-black text-black dark:text-white font-sans antialiased">
+		<slot />
+	</body>
+</html>
+
+<style is:global>
+	:root {
+		--color-light: #FFFFFF;
+		--color-dark: #000000;
+	}
+	
+	/* Smooth scrolling */
+	html {
+		scroll-behavior: smooth;
+	}
+	
+	/* Selection styling */
+	::selection {
+		background: rgba(0, 0, 0, 0.15);
+	}
+	
+	.dark ::selection {
+		background: rgba(255, 255, 255, 0.2);
+	}
+</style>
+
+

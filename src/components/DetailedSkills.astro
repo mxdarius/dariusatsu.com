@@ -1,0 +1,87 @@
+---
+const skillCategories = [
+  {
+    title: "TECHNICAL & IT SUPPORT",
+    items: [
+      "Hardware/software troubleshooting (Windows, macOS, Linux, mobile)",
+      "System, network & application diagnostics",
+      "Building & maintaining technical setups (studios, POS/EPOS, tools)"
+    ]
+  },
+  {
+    title: "DIGITAL & DEVELOPMENT",
+    items: [
+      "Front-end & back-end feature development",
+      "Automation scripts & workflow tools",
+      "Data processing, modelling & Python analysis",
+      "Bespoke operational & creative apps"
+    ]
+  },
+  {
+    title: "SYSTEMS OPTIMISATION",
+    items: [
+      "Streamlining creative & customer-facing processes",
+      "Implementing efficiency-improving systems",
+      "Designing tools for reduced manual workload"
+    ]
+  },
+  {
+    title: "ANALYTICAL SKILLS",
+    items: [
+      "Exploratory data analysis & dashboard building",
+      "SQL, Power BI, Python & Excel for business insights"
+    ]
+  },
+  {
+    title: "OPERATIONAL LEADERSHIP",
+    items: [
+      "Leading teams in high-pressure environments",
+      "Coordinating operations, staffing & compliance",
+      "Training & mentoring colleagues"
+    ]
+  },
+  {
+    title: "CUSTOMER SERVICE",
+    items: [
+      "Clear technical & operational support",
+      "Calm escalation management",
+      "Supporting diverse user groups"
+    ]
+  },
+  {
+    title: "CREATIVE-SECTOR SUPPORT",
+    items: [
+      "Studio, AV & creative space maintenance",
+      "Hands-on technical fixes for artists & producers"
+    ]
+  },
+  {
+    title: "COMMERCIAL STRATEGY",
+    items: [
+      "Identifying efficiency & income opportunities",
+      "Building partnerships & business solutions"
+    ]
+  }
+];
+---
+
+<section class="max-w-6xl mx-auto py-20 px-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-gray-800">
+    {skillCategories.map((category) => (
+      <div class="bg-white dark:bg-black p-6 hover:bg-gray-50 dark:hover:bg-gray-950 transition-colors duration-300">
+        <h3 class="text-sm font-bold tracking-wider text-black dark:text-white mb-4 pb-3 border-b border-gray-200 dark:border-gray-800">
+          {category.title}
+        </h3>
+        <ul class="space-y-2">
+          {category.items.map((item) => (
+            <li class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+</section>
+
+
